@@ -1,4 +1,4 @@
-package ru.viaznin.tgcrosspromotionhelper.telegram;
+package ru.viaznin.tgcrosspromotionhelper.telegramapi;
 
 /**
  * This class contains as static nested classes all other TDLib interface
