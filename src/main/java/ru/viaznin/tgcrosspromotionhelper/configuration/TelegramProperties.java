@@ -9,12 +9,12 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TelegramProperties {
-    public boolean useMessageDatabase;
-    public boolean useSecretChats;
-    public int apiId;
-    public String apiHash;
-    public String systemLanguageCode;
-    public String deviceModel;
-    public String applicationVersion;
-    public boolean enableStorageOptimizer;
+    private boolean useMessageDatabase;
+    private boolean useSecretChats;
+    private int apiId;
+    private String apiHash;
+    private String systemLanguageCode;
+    private String deviceModel;
+    private String applicationVersion;
+    private boolean enableStorageOptimizer;
 }

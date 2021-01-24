@@ -2,6 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <repositories>
+        <repository>
+            <id>mchv</id>
+            <name>MCHV Apache Maven Packages</name>
+            <url>https://mvn.mchv.eu/repository/mchv/</url>
+        </repository>
+    </repositories>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -61,6 +68,17 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.5.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>it.tdlight</groupId>
+            <artifactId>tdlight-java</artifactId>
+            <version>4.171.48</version>
+        </dependency>
+        <dependency>
+            <groupId>it.tdlight</groupId>
+            <artifactId>tdlight-natives-linux-amd64</artifactId>
+            <version>3.2.52</version>
         </dependency>
     </dependencies>
 
