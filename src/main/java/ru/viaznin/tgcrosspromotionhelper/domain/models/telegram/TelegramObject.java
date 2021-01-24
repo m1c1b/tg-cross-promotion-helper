@@ -11,6 +11,9 @@ public abstract class TelegramObject {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public long id;
 
+    @Column(name = "telegram_id")
+    public long telegramId;
+
     @Column(name = "name")
     public String name;
 }
