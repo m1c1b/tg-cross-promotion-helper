@@ -5,9 +5,15 @@ import it.tdlight.common.ResultHandler;
 import it.tdlight.common.TelegramClient;
 import it.tdlight.jni.TdApi;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.viaznin.tgcrosspromotionhelper.configuration.TelegramProperties;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 
 /**
@@ -17,25 +23,35 @@ import ru.viaznin.tgcrosspromotionhelper.configuration.TelegramProperties;
 public class TelegramApiExecutorService {
     private final TelegramProperties telegramProperties;
     private final TelegramClient client;
+
+    // region Auth
+
     private volatile String queryParam;
     private static volatile String result;
     private TdApi.AuthorizationState authorizationState;
     private static volatile boolean next;
+
+    //endregion
+
+    //region Filled from client
+
+    private static final ConcurrentHashMap<Long, TdApi.Chat> chats = new ConcurrentHashMap<>();
+
+    //endregion
 
     @Autowired
     public TelegramApiExecutorService(TelegramProperties telegramProperties, TelegramClient client) {
         this.telegramProperties = telegramProperties;
         this.client = client;
         client.initialize(new UpdateHandler(), null, null);
+        client.execute(new TdApi.SetLogVerbosityLevel(0));
     }
 
     private class UpdateHandler implements ResultHandler {
         @Override
         public void onResult(TdApi.Object object) {
             switch (object.getConstructor()) {
-                case TdApi.UpdateAuthorizationState.CONSTRUCTOR:
-                    onAuthorizationStateUpdated(((TdApi.UpdateAuthorizationState) object).authorizationState);
-                    break;
+                case TdApi.UpdateAuthorizationState.CONSTRUCTOR -> onAuthorizationStateUpdated(((TdApi.UpdateAuthorizationState) object).authorizationState);
 
 //                case TdApi.UpdateUser.CONSTRUCTOR:
 //                    TdApi.UpdateUser updateUser = (TdApi.UpdateUser) object;
@@ -61,19 +77,12 @@ public class TelegramApiExecutorService {
 //                    TdApi.UpdateSecretChat updateSecretChat = (TdApi.UpdateSecretChat) object;
 //                    secretChats.put(updateSecretChat.secretChat.id, updateSecretChat.secretChat);
 //                    break;
-//
-//                case TdApi.UpdateNewChat.CONSTRUCTOR: {
-//                    TdApi.UpdateNewChat updateNewChat = (TdApi.UpdateNewChat) object;
-//                    TdApi.Chat chat = updateNewChat.chat;
-//                    synchronized (chat) {
-//                        chats.put(chat.id, chat);
-//
-//                        TdApi.ChatPosition[] positions = chat.positions;
-//                        chat.positions = new TdApi.ChatPosition[0];
-//                        setChatPositions(chat, positions);
-//                    }
-//                    break;
-//                }
+
+                case TdApi.UpdateNewChat.CONSTRUCTOR -> {
+                    var updateNewChat = (TdApi.UpdateNewChat) object;
+                    var chat = updateNewChat.chat;
+                    chats.put(chat.id, chat);
+                }
 //                case TdApi.UpdateChatTitle.CONSTRUCTOR: {
 //                    TdApi.UpdateChatTitle updateChat = (TdApi.UpdateChatTitle) object;
 //                    TdApi.Chat chat = chats.get(updateChat.chatId);
@@ -240,10 +249,34 @@ public class TelegramApiExecutorService {
 //                    TdApi.UpdateSupergroupFullInfo updateSupergroupFullInfo = (TdApi.UpdateSupergroupFullInfo) object;
 //                    supergroupsFullInfo.put(updateSupergroupFullInfo.supergroupId, updateSupergroupFullInfo.supergroupFullInfo);
 //                    break;
-//                default:
-//                    // print("Unsupported update:" + newLine + object);
+                default -> System.err.println("Unsupported update:" + object);
             }
         }
+    }
+
+    /**
+     * Get channels by title substring
+     *
+     * @param titleSubstring title substring
+     * @return id - title pairs
+     */
+    public List<ImmutablePair<Integer, String>> getChannels(String titleSubstring) {
+        client.send(new TdApi.GetChats(new TdApi.ChatListMain(), Long.MAX_VALUE, 0, Integer.MAX_VALUE), object -> {
+            switch (object.getConstructor()) {
+                case TdApi.Error.CONSTRUCTOR -> System.err.println("Receive an error for GetChats:" + object);
+                case TdApi.Chats.CONSTRUCTOR -> {
+                }
+                default -> System.err.println("Receive wrong response from TDLib:" + object);
+            }
+        });
+
+        return chats.values()
+                .stream()
+                .filter(c -> c.type.getConstructor() == TdApi.ChatTypeSupergroup.CONSTRUCTOR && ((TdApi.ChatTypeSupergroup) c.type).isChannel)
+                .filter(c -> c.title.toLowerCase().contains(titleSubstring.toLowerCase()))
+                .sorted(Comparator.comparing(c -> c.title))
+                .map(c -> new ImmutablePair<>(((TdApi.ChatTypeSupergroup) c.type).supergroupId, c.title))
+                .collect(Collectors.toList());
     }
 
     //region Auth
