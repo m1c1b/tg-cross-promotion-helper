@@ -61,7 +61,7 @@ public class CrossPromotionService {
     public Long getAdministratingChannelTelegramId(Long crossPromotionId) {
         var crossPromotion = crossPromotionRepository
                 .findById(crossPromotionId)
-                .orElseThrow(() -> new IllegalArgumentException("Cross promotion with id: " + crossPromotionId + "does not exist."));
+                .orElseThrow(() -> new IllegalArgumentException(createExceptionMessage(crossPromotionId)));
 
         return crossPromotion.getAdministratingChannel().telegramId;
     }
@@ -77,7 +77,7 @@ public class CrossPromotionService {
     public Long end(Long crossPromotionId, List<ChatEvent> allJoinedUsers) {
         var crossPromotion = crossPromotionRepository
                 .findById(crossPromotionId)
-                .orElseThrow(() -> new IllegalArgumentException("Cross promotion with id: " + crossPromotionId + "does not exist."));
+                .orElseThrow(() -> new IllegalArgumentException(createExceptionMessage(crossPromotionId)));
 
         if (crossPromotion.getEndDate() != null)
             throw new IllegalAccessException("This cross promotion is ended!");
@@ -98,5 +98,30 @@ public class CrossPromotionService {
         crossPromotionRepository.save(crossPromotion);
 
         return crossPromotion.getId();
+    }
+
+    /**
+     * Get cross promotion report
+     *
+     * @param crossPromotionId Cross promotion id
+     * @return Cross promotion report
+     */
+    public String getReport(Long crossPromotionId) {
+        var crossPromotion = crossPromotionRepository
+                .findById(crossPromotionId)
+                .orElseThrow(() -> new IllegalArgumentException(createExceptionMessage(crossPromotionId)));
+
+        if (crossPromotion.getEndDate() == null)
+            throw new IllegalArgumentException("Cross promotion with id: " + crossPromotionId + " isn't over yet.");
+
+        var builder = new StringBuilder();
+
+        crossPromotion.getEnteredUsers().forEach(u -> builder.append(u).append('\n'));
+
+        return builder.toString();
+    }
+
+    private String createExceptionMessage(Long crossPromotionId) {
+        return "Cross promotion with id: " + crossPromotionId + " does not exist.";
     }
 }

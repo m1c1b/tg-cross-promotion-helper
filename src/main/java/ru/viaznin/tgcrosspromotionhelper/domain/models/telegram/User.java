@@ -25,7 +25,12 @@ public class User extends TelegramObject {
 
     public User(String nickname, String firstName, int telegramId) {
         this.nickname = nickname;
-        this.name = firstName;
+        name = firstName;
         this.telegramId = (long) telegramId;
+    }
+
+    @Override
+    public String toString() {
+        return telegramId + " - @" + getNickname();
     }
 }

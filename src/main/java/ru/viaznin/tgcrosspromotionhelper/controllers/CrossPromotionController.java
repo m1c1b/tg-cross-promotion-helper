@@ -48,4 +48,15 @@ public class CrossPromotionController {
 
         return crossPromotionService.end(crossPromotionId, allJoinedUsers);
     }
+
+    /**
+     * Get cross promotion report
+     *
+     * @param crossPromotionId Cross promotion id
+     * @return Cross promotion report
+     */
+    @GetMapping("/getReport")
+    public String getReport (@RequestParam Long crossPromotionId){
+        return crossPromotionService.getReport(crossPromotionId);
+    }
 }

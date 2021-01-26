@@ -353,8 +353,8 @@ public class TelegramApiExecutorService {
     @SneakyThrows
     public String authorize(String param) {
         queryParam = param;
-        if (this.authorizationState != null)
-            onAuthorizationStateUpdated(this.authorizationState);
+        if (authorizationState != null)
+            onAuthorizationStateUpdated(authorizationState);
 
         next = false;
         while (!next)
