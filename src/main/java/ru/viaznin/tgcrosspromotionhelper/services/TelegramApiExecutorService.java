@@ -248,7 +248,6 @@ public class TelegramApiExecutorService {
 //                    TdApi.UpdateSupergroupFullInfo updateSupergroupFullInfo = (TdApi.UpdateSupergroupFullInfo) object;
 //                    supergroupsFullInfo.put(updateSupergroupFullInfo.supergroupId, updateSupergroupFullInfo.supergroupFullInfo);
 //                    break;
-                default -> System.err.println("Unsupported update:" + object);
             }
         }
     }
