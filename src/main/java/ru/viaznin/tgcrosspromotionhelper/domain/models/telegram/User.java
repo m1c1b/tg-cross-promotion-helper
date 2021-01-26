@@ -39,6 +39,11 @@ public class User extends TelegramObject {
 
     @Override
     public String toString() {
-        return telegramId + " - @" + getNickname();
+        var result = telegramId.toString();
+
+        if (getNickname() != null)
+            result += " - @" + getNickname();
+
+        return result;
     }
 }
