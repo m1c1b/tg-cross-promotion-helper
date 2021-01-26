@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * Bean configuration
+ *
  * @author Ilya Viaznin
  */
 @Configuration

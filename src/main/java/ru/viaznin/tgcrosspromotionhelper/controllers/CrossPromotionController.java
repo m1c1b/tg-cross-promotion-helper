@@ -7,7 +7,7 @@ import ru.viaznin.tgcrosspromotionhelper.services.CrossPromotionService;
 import ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService;
 
 /**
- * Class for cross promotion actions
+ * Controller for cross promotion actions
  *
  * @author Ilya Viaznin
  */
@@ -16,6 +16,7 @@ import ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService;
 public class CrossPromotionController {
     private final CrossPromotionService crossPromotionService;
     private final TelegramApiExecutorService telegramApiExecutorService;
+
     @Autowired
     public CrossPromotionController(CrossPromotionService crossPromotionService, TelegramApiExecutorService telegramApiExecutorService) {
         this.crossPromotionService = crossPromotionService;
@@ -27,6 +28,7 @@ public class CrossPromotionController {
      *
      * @param administratingChannelId Channel id
      * @param newChannelName          Channel name if it doesn't exists
+     *
      * @return Created cross promotion
      */
     @PostMapping("/start")
@@ -38,10 +40,11 @@ public class CrossPromotionController {
      * End cross promotion
      *
      * @param crossPromotionId Cross promotion id
+     *
      * @return Current cross promotion id
      */
     @PatchMapping("/end")
-    public Long end(@RequestParam Long crossPromotionId){
+    public Long end(@RequestParam Long crossPromotionId) {
         var tgId = crossPromotionService.getAdministratingChannelTelegramId(crossPromotionId);
 
         var allJoinedUsers = telegramApiExecutorService.getJoinedDomainEventsByChannelId(tgId);
@@ -53,10 +56,11 @@ public class CrossPromotionController {
      * Get cross promotion report
      *
      * @param crossPromotionId Cross promotion id
+     *
      * @return Cross promotion report
      */
     @GetMapping("/getReport")
-    public String getReport (@RequestParam Long crossPromotionId){
+    public String getReport(@RequestParam Long crossPromotionId) {
         return crossPromotionService.getReport(crossPromotionId);
     }
 }

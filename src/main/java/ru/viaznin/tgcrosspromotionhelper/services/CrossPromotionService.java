@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.CrossPromotion;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.ChatEvent;
-import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.channels.AdministratedChannel;
+import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.channels.AdministratingChannel;
 import ru.viaznin.tgcrosspromotionhelper.repositories.AdministratingChannelsRepository;
 import ru.viaznin.tgcrosspromotionhelper.repositories.CrossPromotionRepository;
 
@@ -41,7 +41,7 @@ public class CrossPromotionService {
                 .findFirstByTelegramId(administratingChannelId);
 
         if (administratingChannel == null) {
-            administratingChannel = new AdministratedChannel(administratingChannelId, newChannelName);
+            administratingChannel = new AdministratingChannel(administratingChannelId, newChannelName);
             administratingChannel.telegramId = administratingChannelId;
         }
 
@@ -92,7 +92,7 @@ public class CrossPromotionService {
 
         joinedAfterStart.forEach(u -> u.setCrossPromotion(crossPromotion));
 
-        crossPromotion.setEnteredUsers(joinedAfterStart);
+        crossPromotion.setJoinedUsers(joinedAfterStart);
         crossPromotion.setEndDate(new Date());
 
         crossPromotionRepository.save(crossPromotion);
@@ -116,7 +116,7 @@ public class CrossPromotionService {
 
         var builder = new StringBuilder();
 
-        crossPromotion.getEnteredUsers().forEach(u -> builder.append(u).append('\n'));
+        crossPromotion.getJoinedUsers().forEach(u -> builder.append(u).append('\n'));
 
         return builder.toString();
     }

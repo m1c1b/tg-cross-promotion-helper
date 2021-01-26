@@ -5,6 +5,8 @@ import org.springframework.stereotype.Repository;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.CrossPromotion;
 
 /**
+ * Cross promotion repository
+ *
  * @author Ilya Viaznin
  */
 @Repository

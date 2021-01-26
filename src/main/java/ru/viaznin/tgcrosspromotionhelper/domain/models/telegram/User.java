@@ -10,6 +10,8 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 
 /**
+ * Domain user
+ *
  * @author Ilya Viaznin
  */
 @Setter
@@ -17,9 +19,15 @@ import javax.persistence.ManyToOne;
 @NoArgsConstructor
 @Entity(name = "t_users")
 public class User extends TelegramObject {
+    /**
+     * User nickname without @
+     */
     @Column(name = "nickname")
     public String nickname;
 
+    /**
+     * Cross promotion reference
+     */
     @ManyToOne
     public CrossPromotion crossPromotion;
 

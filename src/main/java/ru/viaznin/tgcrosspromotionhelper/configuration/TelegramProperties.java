@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
+ * Telegram client properties from config file
+ *
  * @author Ilya Viaznin
  */
 @Getter

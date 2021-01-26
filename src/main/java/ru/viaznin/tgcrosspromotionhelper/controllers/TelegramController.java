@@ -12,6 +12,8 @@ import ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService;
 import java.util.List;
 
 /**
+ * Controller for executing telegram API
+ *
  * @author Ilya Viaznin
  */
 @RestController
@@ -32,7 +34,9 @@ public class TelegramController {
 
     /**
      * Get channels by title substring
+     *
      * @param titleSubstring title substring
+     *
      * @return id - title pairs
      */
     @GetMapping("/getChannels")
@@ -43,11 +47,13 @@ public class TelegramController {
 
     /**
      * Get joined users channel events
+     *
      * @param channelId Channel id
+     *
      * @return List of channel events
      */
     @GetMapping("/getJoinedLogUsers")
-    public List<TdApi.ChatEvent> getJoinedLogUsers(@RequestParam Long channelId){
+    public List<TdApi.ChatEvent> getJoinedLogUsers(@RequestParam Long channelId) {
 
         return telegramApiExecutor.getJoinedLogUsers(channelId);
     }
