@@ -1,5 +1,6 @@
 package ru.viaznin.tgcrosspromotionhelper.controllers;
 
+import it.tdlight.jni.TdApi;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,8 +36,19 @@ public class TelegramController {
      * @return id - title pairs
      */
     @GetMapping("/getChannels")
-    public List<ImmutablePair<Integer, String>> getChannels(@RequestParam String titleSubstring) {
+    public List<ImmutablePair<Long, String>> getChannels(@RequestParam String titleSubstring) {
 
         return telegramApiExecutor.getChannels(titleSubstring);
+    }
+
+    /**
+     * Get joined users channel events
+     * @param channelId Channel id
+     * @return List of channel events
+     */
+    @GetMapping("/getJoinedLogUsers")
+    public List<TdApi.ChatEvent> getJoinedLogUsers(@RequestParam Long channelId){
+
+        return telegramApiExecutor.getJoinedLogUsers(channelId);
     }
 }

@@ -10,8 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.viaznin.tgcrosspromotionhelper.configuration.TelegramProperties;
 
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -260,7 +259,7 @@ public class TelegramApiExecutorService {
      * @param titleSubstring title substring
      * @return id - title pairs
      */
-    public List<ImmutablePair<Integer, String>> getChannels(String titleSubstring) {
+    public List<ImmutablePair<Long, String>> getChannels(String titleSubstring) {
         client.send(new TdApi.GetChats(new TdApi.ChatListMain(), Long.MAX_VALUE, 0, Integer.MAX_VALUE), object -> {
             switch (object.getConstructor()) {
                 case TdApi.Error.CONSTRUCTOR -> System.err.println("Receive an error for GetChats:" + object);
@@ -275,8 +274,27 @@ public class TelegramApiExecutorService {
                 .filter(c -> c.type.getConstructor() == TdApi.ChatTypeSupergroup.CONSTRUCTOR && ((TdApi.ChatTypeSupergroup) c.type).isChannel)
                 .filter(c -> c.title.toLowerCase().contains(titleSubstring.toLowerCase()))
                 .sorted(Comparator.comparing(c -> c.title))
-                .map(c -> new ImmutablePair<>(((TdApi.ChatTypeSupergroup) c.type).supergroupId, c.title))
+                .map(c -> new ImmutablePair<>(c.id, c.title))
                 .collect(Collectors.toList());
+    }
+
+    public List<TdApi.ChatEvent> getJoinedLogUsers(Long channelId) {
+
+        var filter = new TdApi.ChatEventLogFilters();
+        filter.memberJoins = true;
+
+        List<TdApi.ChatEvent> events = new ArrayList<>();
+
+        next = false;
+        client.send(new TdApi.GetChatEventLog(channelId, null, 0, Integer.MAX_VALUE, filter, new int[]{}), object -> {
+            events.addAll(Arrays.asList(((TdApi.ChatEvents) object).events));
+            next = true;
+        });
+        while (!next)
+            Thread.onSpinWait();
+
+        var dates = events.stream().map(e -> new Date(e.date * 1000L)).collect(Collectors.toList());
+        return events;
     }
 
     //region Auth
