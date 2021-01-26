@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 @Service
 public class CrossPromotionService {
     private final CrossPromotionRepository crossPromotionRepository;
+
     private final AdministratingChannelsRepository administratingChannelsRepository;
 
     @Autowired
@@ -34,6 +35,7 @@ public class CrossPromotionService {
      *
      * @param administratingChannelId Channel id
      * @param newChannelName          Channel name if it doesn't exists
+     *
      * @return Created cross promotion
      */
     public CrossPromotion start(Long administratingChannelId, String newChannelName) {
@@ -54,6 +56,7 @@ public class CrossPromotionService {
      * Get telegram id by cross promotion id
      *
      * @param crossPromotionId Cross promotion id
+     *
      * @return telegram id
      */
     public Long getAdministratingChannelTelegramId(Long crossPromotionId) {
@@ -69,6 +72,7 @@ public class CrossPromotionService {
      *
      * @param crossPromotionId Cross promotion id
      * @param allJoinedUsers   Joined users
+     *
      * @return Current cross promotion id
      */
     @SneakyThrows
@@ -102,6 +106,7 @@ public class CrossPromotionService {
      * Get cross promotion report
      *
      * @param crossPromotionId Cross promotion id
+     *
      * @return Cross promotion report
      */
     public String getReport(Long crossPromotionId) {
@@ -121,5 +126,14 @@ public class CrossPromotionService {
 
     private String createExceptionMessage(Long crossPromotionId) {
         return "Cross promotion with id: " + crossPromotionId + " does not exist.";
+    }
+
+    /**
+     * Get ongoing cross promotions
+     *
+     * @return Ongoing cross promotions
+     */
+    public List<CrossPromotion> getOngoing() {
+        return crossPromotionRepository.findAllByEndDateIsNullOrderByStartDate();
     }
 }

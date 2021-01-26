@@ -6,6 +6,8 @@ import ru.viaznin.tgcrosspromotionhelper.domain.models.CrossPromotion;
 import ru.viaznin.tgcrosspromotionhelper.services.CrossPromotionService;
 import ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService;
 
+import java.util.List;
+
 /**
  * Controller for cross promotion actions
  *
@@ -15,6 +17,7 @@ import ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService;
 @RequestMapping("/crossPromotion")
 public class CrossPromotionController {
     private final CrossPromotionService crossPromotionService;
+
     private final TelegramApiExecutorService telegramApiExecutorService;
 
     @Autowired
@@ -62,5 +65,15 @@ public class CrossPromotionController {
     @GetMapping("/getReport")
     public String getReport(@RequestParam Long crossPromotionId) {
         return crossPromotionService.getReport(crossPromotionId);
+    }
+
+    /**
+     * Get ongoing cross promotions
+     *
+     * @return Ongoing cross promotions
+     */
+    @GetMapping("/getOngoing")
+    public List<CrossPromotion> getOngoing() {
+        return crossPromotionService.getOngoing();
     }
 }
