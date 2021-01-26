@@ -9,6 +9,8 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.viaznin.tgcrosspromotionhelper.configuration.TelegramProperties;
+import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.ChatEvent;
+import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.User;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,6 +48,9 @@ public class TelegramApiExecutorService {
         client.execute(new TdApi.SetLogVerbosityLevel(0));
     }
 
+    /**
+     * Default update handler
+     */
     private class UpdateHandler implements ResultHandler {
         @Override
         public void onResult(TdApi.Object object) {
@@ -277,27 +282,74 @@ public class TelegramApiExecutorService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Get joined events
+     *
+     * @param channelId Telegram id
+     * @return Joined events
+     */
+    @SuppressWarnings("LoopConditionNotUpdatedInsideLoop")
     public List<TdApi.ChatEvent> getJoinedLogUsers(Long channelId) {
-
         var filter = new TdApi.ChatEventLogFilters();
         filter.memberJoins = true;
 
-        List<TdApi.ChatEvent> events = new ArrayList<>();
+        // You can't get channel event log before fetching this channel
+        if (!chats.containsKey(channelId))
+            getChannels("");
+
+        while (!chats.containsKey(channelId))
+            Thread.onSpinWait();
 
         next = false;
+        List<TdApi.ChatEvent> events = new ArrayList<>();
         client.send(new TdApi.GetChatEventLog(channelId, null, 0, Integer.MAX_VALUE, filter, new int[]{}), object -> {
-            events.addAll(Arrays.asList(((TdApi.ChatEvents) object).events));
+            if (object.getConstructor() == TdApi.ChatEvents.CONSTRUCTOR)
+                events.addAll(Arrays.asList(((TdApi.ChatEvents) object).events));
             next = true;
         });
+
         while (!next)
             Thread.onSpinWait();
 
-        var dates = events.stream().map(e -> new Date(e.date * 1000L)).collect(Collectors.toList());
         return events;
+    }
+
+    /**
+     * Get joined domain events
+     *
+     * @param channelId Telegram id
+     * @return Joined domain events
+     */
+    public List<ChatEvent> getJoinedDomainEventsByChannelId(Long channelId) {
+        var domainEvents = new ConcurrentHashMap<Date, ChatEvent>();
+        var events = getJoinedLogUsers(channelId);
+
+        events.forEach(e ->
+                client.send(new TdApi.GetUser(e.userId), object -> {
+                    var tgUser = (TdApi.User) object;
+
+                    var user = new User(tgUser.username, tgUser.firstName, tgUser.id);
+                    var eventDate = new Date(e.date * 1000L);
+
+                    var domainEvent = new ChatEvent(user, eventDate);
+
+                    domainEvents.put(eventDate, domainEvent);
+                }));
+
+        while (domainEvents.size() != events.size())
+            Thread.onSpinWait();
+
+        return new ArrayList<>(domainEvents.values());
     }
 
     //region Auth
 
+    /**
+     * Authorize
+     *
+     * @param param String for auth step
+     * @return Auth step result
+     */
     @SneakyThrows
     public String authorize(String param) {
         queryParam = param;
@@ -313,6 +365,11 @@ public class TelegramApiExecutorService {
         return result;
     }
 
+    /**
+     * Authorization steps actions
+     *
+     * @param authorizationState current auth state
+     */
     private void onAuthorizationStateUpdated(TdApi.AuthorizationState authorizationState) {
         if (authorizationState != null)
             this.authorizationState = authorizationState;
@@ -370,6 +427,11 @@ public class TelegramApiExecutorService {
         queryParam = null;
     }
 
+    /**
+     * Set auth result and go to nest auth step
+     *
+     * @param message Auth result message
+     */
     private void setAuthResultAndGoNext(AuthMessage message) {
         result = message.toString();
         next = true;

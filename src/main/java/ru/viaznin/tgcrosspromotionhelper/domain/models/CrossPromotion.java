@@ -28,10 +28,10 @@ public class CrossPromotion {
     @Column(name = "end_date")
     public Date endDate;
 
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL)
     public List<User> enteredUsers;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "administrating_channel_id")
     public AdministratedChannel administratingChannel;
 

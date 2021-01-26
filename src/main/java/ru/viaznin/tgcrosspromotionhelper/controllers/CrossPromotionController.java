@@ -1,12 +1,10 @@
 package ru.viaznin.tgcrosspromotionhelper.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.CrossPromotion;
 import ru.viaznin.tgcrosspromotionhelper.services.CrossPromotionService;
+import ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService;
 
 /**
  * Class for cross promotion actions
@@ -17,10 +15,11 @@ import ru.viaznin.tgcrosspromotionhelper.services.CrossPromotionService;
 @RequestMapping("/crossPromotion")
 public class CrossPromotionController {
     private final CrossPromotionService crossPromotionService;
-
+    private final TelegramApiExecutorService telegramApiExecutorService;
     @Autowired
-    public CrossPromotionController(CrossPromotionService crossPromotionService) {
+    public CrossPromotionController(CrossPromotionService crossPromotionService, TelegramApiExecutorService telegramApiExecutorService) {
         this.crossPromotionService = crossPromotionService;
+        this.telegramApiExecutorService = telegramApiExecutorService;
     }
 
     /**
@@ -33,5 +32,20 @@ public class CrossPromotionController {
     @PostMapping("/start")
     public CrossPromotion start(@RequestParam Long administratingChannelId, @RequestParam(required = false) String newChannelName) {
         return crossPromotionService.start(administratingChannelId, newChannelName);
+    }
+
+    /**
+     * End cross promotion
+     *
+     * @param crossPromotionId Cross promotion id
+     * @return Current cross promotion id
+     */
+    @PatchMapping("/end")
+    public Long end(@RequestParam Long crossPromotionId){
+        var tgId = crossPromotionService.getAdministratingChannelTelegramId(crossPromotionId);
+
+        var allJoinedUsers = telegramApiExecutorService.getJoinedDomainEventsByChannelId(tgId);
+
+        return crossPromotionService.end(crossPromotionId, allJoinedUsers);
     }
 }

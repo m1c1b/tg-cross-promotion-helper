@@ -1,6 +1,7 @@
 package ru.viaznin.tgcrosspromotionhelper.domain.models.telegram;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.CrossPromotion;
 
@@ -13,6 +14,7 @@ import javax.persistence.ManyToOne;
  */
 @Setter
 @Getter
+@NoArgsConstructor
 @Entity(name = "t_users")
 public class User extends TelegramObject {
     @Column(name = "nickname")
@@ -20,4 +22,10 @@ public class User extends TelegramObject {
 
     @ManyToOne
     public CrossPromotion crossPromotion;
+
+    public User(String nickname, String firstName, int telegramId) {
+        this.nickname = nickname;
+        this.name = firstName;
+        this.telegramId = (long) telegramId;
+    }
 }
