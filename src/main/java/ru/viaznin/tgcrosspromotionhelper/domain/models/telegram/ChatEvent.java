@@ -1,7 +1,6 @@
 package ru.viaznin.tgcrosspromotionhelper.domain.models.telegram;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.Date;
 
@@ -11,17 +10,16 @@ import java.util.Date;
  * @author Ilya Viaznin
  */
 @Getter
-@Setter
 public class ChatEvent {
     /**
      * User of event
      */
-    public User user;
+    private final User user;
 
     /**
      * Event date
      */
-    public Date date;
+    private final Date date;
 
     public ChatEvent(User user, Date date) {
         this.user = user;

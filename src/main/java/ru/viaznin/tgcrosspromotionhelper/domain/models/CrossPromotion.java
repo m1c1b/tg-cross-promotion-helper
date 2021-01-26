@@ -28,7 +28,7 @@ public class CrossPromotion {
      * Start date
      */
     @Column(name = "start_date")
-    public Date startDate;
+    private Date startDate;
 
     /**
      * End date

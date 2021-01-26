@@ -40,10 +40,8 @@ public class CrossPromotionService {
         var administratingChannel = administratingChannelsRepository
                 .findFirstByTelegramId(administratingChannelId);
 
-        if (administratingChannel == null) {
+        if (administratingChannel == null)
             administratingChannel = new AdministratingChannel(administratingChannelId, newChannelName);
-            administratingChannel.telegramId = administratingChannelId;
-        }
 
         var newCrossPromo = new CrossPromotion(new Date(), administratingChannel);
 
@@ -63,7 +61,7 @@ public class CrossPromotionService {
                 .findById(crossPromotionId)
                 .orElseThrow(() -> new IllegalArgumentException(createExceptionMessage(crossPromotionId)));
 
-        return crossPromotion.getAdministratingChannel().telegramId;
+        return crossPromotion.getAdministratingChannel().getTelegramId();
     }
 
     /**

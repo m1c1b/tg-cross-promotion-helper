@@ -23,7 +23,7 @@ public class User extends TelegramObject {
      * User nickname without @
      */
     @Column(name = "nickname")
-    public String nickname;
+    private String nickname;
 
     /**
      * Cross promotion reference

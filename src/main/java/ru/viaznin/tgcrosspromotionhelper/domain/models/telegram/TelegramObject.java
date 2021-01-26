@@ -1,5 +1,7 @@
 package ru.viaznin.tgcrosspromotionhelper.domain.models.telegram;
 
+import lombok.Getter;
+
 import javax.persistence.*;
 
 /**
@@ -7,6 +9,7 @@ import javax.persistence.*;
  *
  * @author Ilya Viaznin
  */
+@Getter
 @MappedSuperclass
 public abstract class TelegramObject {
     @Id
@@ -17,11 +20,11 @@ public abstract class TelegramObject {
      * Telegram id
      */
     @Column(name = "telegram_id")
-    public Long telegramId;
+    protected Long telegramId;
 
     /**
      * Object name
      */
     @Column(name = "name")
-    public String name;
+    protected String name;
 }
