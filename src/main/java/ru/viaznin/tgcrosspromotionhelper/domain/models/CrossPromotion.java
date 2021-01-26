@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.User;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.channels.AdministratedChannel;
-import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.channels.OutsideChannel;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -29,10 +28,6 @@ public class CrossPromotion {
 
     @OneToMany
     public List<User> enteredUsers;
-
-    @OneToOne
-    @JoinColumn(name = "outside_channel_id")
-    public OutsideChannel outsideChannel;
 
     @OneToOne
     @JoinColumn(name = "administrating_channel_id")
