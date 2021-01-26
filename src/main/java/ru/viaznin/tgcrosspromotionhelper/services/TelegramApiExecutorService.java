@@ -34,8 +34,6 @@ public class TelegramApiExecutorService {
      */
     private static volatile String result;
 
-    // region Auth
-
     /**
      * Spin wait flag
      */
@@ -51,10 +49,6 @@ public class TelegramApiExecutorService {
      */
     private final TelegramClient client;
 
-    //endregion
-
-    //region Filled from client
-
     /**
      * Auth query string
      */
@@ -64,8 +58,6 @@ public class TelegramApiExecutorService {
      * Current auth state
      */
     private TdApi.AuthorizationState authorizationState;
-
-    //endregion
 
     @Autowired
     public TelegramApiExecutorService(TelegramProperties telegramProperties, TelegramClient client) {
