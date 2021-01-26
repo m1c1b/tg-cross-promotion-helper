@@ -9,10 +9,10 @@ import javax.persistence.*;
 public abstract class TelegramObject {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public long id;
+    public Long id;
 
     @Column(name = "telegram_id")
-    public long telegramId;
+    public Long telegramId;
 
     @Column(name = "name")
     public String name;

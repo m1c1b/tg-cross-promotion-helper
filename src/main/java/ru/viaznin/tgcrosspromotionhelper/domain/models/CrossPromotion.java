@@ -1,6 +1,7 @@
 package ru.viaznin.tgcrosspromotionhelper.domain.models;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.User;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.channels.AdministratedChannel;
@@ -14,11 +15,12 @@ import java.util.List;
  */
 @Getter
 @Setter
+@NoArgsConstructor
 @Entity(name = "t_cross_promotions")
 public class CrossPromotion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public long id;
+    public Long id;
 
     @Column(name = "start_date")
     public Date startDate;
@@ -29,7 +31,12 @@ public class CrossPromotion {
     @OneToMany
     public List<User> enteredUsers;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "administrating_channel_id")
     public AdministratedChannel administratingChannel;
+
+    public CrossPromotion(Date startDate, AdministratedChannel administratingChannel) {
+        this.startDate = startDate;
+        this.administratingChannel = administratingChannel;
+    }
 }
