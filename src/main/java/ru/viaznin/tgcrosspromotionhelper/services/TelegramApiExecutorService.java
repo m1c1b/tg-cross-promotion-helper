@@ -14,6 +14,7 @@ import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.User;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 
@@ -154,19 +155,24 @@ public class TelegramApiExecutorService {
         var domainEvents = new ConcurrentHashMap<Date, ChatEvent>();
         var events = getJoinedLogUsers(channelId);
 
+        var counter = new AtomicInteger(events.size());
         events.forEach(e ->
                 client.send(new TdApi.GetUser(e.userId), object -> {
-                    var tgUser = (TdApi.User) object;
+                    if (object.getConstructor() == TdApi.User.CONSTRUCTOR) {
+                        var tgUser = (TdApi.User) object;
 
-                    var user = new User(tgUser.username, tgUser.firstName, tgUser.id);
-                    var eventDate = new Date(e.date * 1000L);
+                        var user = new User(tgUser.username, tgUser.firstName, tgUser.id);
+                        var eventDate = new Date(e.date * 1000L);
 
-                    var domainEvent = new ChatEvent(user, eventDate);
+                        var domainEvent = new ChatEvent(user, eventDate);
 
-                    domainEvents.put(eventDate, domainEvent);
+                        domainEvents.put(eventDate, domainEvent);
+                    }
+
+                    counter.set(counter.decrementAndGet());
                 }));
 
-        while (domainEvents.size() != events.size())
+        while (counter.get() != 0)
             Thread.onSpinWait();
 
         return new ArrayList<>(domainEvents.values());
