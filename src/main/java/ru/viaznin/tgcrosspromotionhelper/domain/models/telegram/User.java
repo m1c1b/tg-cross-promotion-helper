@@ -41,7 +41,7 @@ public class User extends TelegramObject {
     public String toString() {
         var result = telegramId.toString();
 
-        if (getNickname() != null)
+        if (getNickname() != null && !getNickname().isEmpty())
             result += " - @" + getNickname();
 
         return result;
