@@ -15,6 +15,7 @@ import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.User;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 
@@ -92,15 +93,27 @@ public class TelegramApiExecutorService {
      *
      * @return id - title pairs
      */
+    @SneakyThrows
     public List<ImmutablePair<Long, String>> getChannels(String titleSubstring) {
+        var errorMessage = new AtomicReference<String>();
+
+        next = false;
+
         client.send(new TdApi.GetChats(new TdApi.ChatListMain(), Long.MAX_VALUE, 0, Integer.MAX_VALUE), object -> {
             switch (object.getConstructor()) {
-                case TdApi.Error.CONSTRUCTOR -> System.err.println("Receive an error for GetChats:" + object);
+                case TdApi.Error.CONSTRUCTOR -> errorMessage.set("Receive an error for getChannels:" + object);
                 case TdApi.Chats.CONSTRUCTOR -> {
                 }
                 default -> System.err.println("Receive wrong response from TDLib:" + object);
             }
+            next = true;
         });
+
+        while (!next)
+            Thread.onSpinWait();
+
+        if (errorMessage.get() != null)
+            throw new Exception(errorMessage.get());
 
         return chats.values()
                 .stream()
