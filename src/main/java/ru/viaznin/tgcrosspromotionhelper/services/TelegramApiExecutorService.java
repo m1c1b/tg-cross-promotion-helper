@@ -190,10 +190,11 @@ public class TelegramApiExecutorService {
     @SneakyThrows
     public String authorize(String param) {
         queryParam = param;
+
+        next = false;
         if (authorizationState != null)
             onAuthorizationStateUpdated(authorizationState);
 
-        next = false;
         while (!next)
             Thread.onSpinWait();
 
