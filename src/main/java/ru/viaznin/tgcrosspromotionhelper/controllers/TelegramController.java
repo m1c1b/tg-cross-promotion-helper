@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,6 +56,6 @@ public class TelegramController {
     @GetMapping("/getJoinedLogUsers")
     public List<TdApi.ChatEvent> getJoinedLogUsers(@RequestParam Long channelId) {
 
-        return telegramApiExecutor.getJoinedLogUsers(channelId);
+        return telegramApiExecutor.getJoinedLogUsers(channelId, new ArrayList<>(), 0);
     }
 }

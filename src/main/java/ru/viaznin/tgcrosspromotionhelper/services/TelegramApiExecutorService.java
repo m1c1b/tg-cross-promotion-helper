@@ -131,8 +131,8 @@ public class TelegramApiExecutorService {
      *
      * @return Joined events
      */
-    @SuppressWarnings("LoopConditionNotUpdatedInsideLoop")
-    public List<TdApi.ChatEvent> getJoinedLogUsers(Long channelId) {
+    @SuppressWarnings({"LoopConditionNotUpdatedInsideLoop", "OptionalGetWithoutIsPresent"})
+    public List<TdApi.ChatEvent> getJoinedLogUsers(Long channelId, List<TdApi.ChatEvent> allChatEvents, long fromEventId) {
         var filter = new TdApi.ChatEventLogFilters();
         filter.memberJoins = true;
 
@@ -144,17 +144,27 @@ public class TelegramApiExecutorService {
             Thread.onSpinWait();
 
         next = false;
-        List<TdApi.ChatEvent> events = new ArrayList<>();
-        client.send(new TdApi.GetChatEventLog(channelId, null, 0, Integer.MAX_VALUE, filter, new int[]{}), object -> {
+        List<TdApi.ChatEvent> currentStepEvents = new ArrayList<>();
+        client.send(new TdApi.GetChatEventLog(channelId, null, fromEventId, 100, filter, new int[]{}), object -> {
             if (object.getConstructor() == TdApi.ChatEvents.CONSTRUCTOR)
-                events.addAll(Arrays.asList(((TdApi.ChatEvents) object).events));
+                currentStepEvents.addAll(Arrays.asList(((TdApi.ChatEvents) object).events));
             next = true;
         });
 
         while (!next)
             Thread.onSpinWait();
 
-        return events;
+        if (currentStepEvents.size() != 0) {
+            allChatEvents.addAll(currentStepEvents);
+            var minEventId = currentStepEvents.stream()
+                    .map(e -> e.id)
+                    .min(Long::compareTo)
+                    .get();
+
+            getJoinedLogUsers(channelId, allChatEvents, minEventId);
+        }
+
+        return allChatEvents;
     }
 
     /**
@@ -166,7 +176,8 @@ public class TelegramApiExecutorService {
      */
     public List<ChatEvent> getJoinedDomainEventsByChannelId(Long channelId) {
         var domainEvents = new ConcurrentHashMap<Date, ChatEvent>();
-        var events = getJoinedLogUsers(channelId);
+
+        var events = getJoinedLogUsers(channelId, new ArrayList<>(), 0);
 
         var counter = new AtomicInteger(events.size());
         events.forEach(e ->
