@@ -21,7 +21,7 @@
     <name>tg-cross-promotion-helper</name>
     <description>Telegram cross promotion helper</description>
     <properties>
-        <java.version>15</java.version>
+        <java.version>16</java.version>
     </properties>
     <dependencies>
         <dependency>
