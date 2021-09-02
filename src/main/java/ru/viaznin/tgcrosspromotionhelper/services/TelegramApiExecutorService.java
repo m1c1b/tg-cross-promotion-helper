@@ -6,7 +6,10 @@ import it.tdlight.common.TelegramClient;
 import it.tdlight.jni.TdApi;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import ru.viaznin.tgcrosspromotionhelper.configuration.TelegramProperties;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.ChatEvent;
@@ -14,10 +17,11 @@ import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.User;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
+import static ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService.AuthMessage.*;
 
 /**
  * Service for executing telegram API
@@ -25,6 +29,7 @@ import java.util.stream.Collectors;
  * @author Ilya Viaznin
  */
 @Service
+@Scope("singleton")
 public class TelegramApiExecutorService {
     /**
      * Fetched chats
@@ -39,7 +44,7 @@ public class TelegramApiExecutorService {
     /**
      * Spin wait flag
      */
-    private static volatile boolean next;
+    private static final AtomicBoolean next = new AtomicBoolean(false);
 
     /**
      * Client configuration
@@ -61,8 +66,11 @@ public class TelegramApiExecutorService {
      */
     private TdApi.AuthorizationState authorizationState;
 
+    private final Logger logger;
+
     @Autowired
     public TelegramApiExecutorService(TelegramProperties telegramProperties, TelegramClient client) {
+        logger = LogManager.getLogger();
         this.telegramProperties = telegramProperties;
         this.client = client;
         client.initialize(new UpdateHandler(), null, null);
@@ -82,6 +90,9 @@ public class TelegramApiExecutorService {
                     var chat = updateNewChat.chat;
                     chats.put(chat.id, chat);
                 }
+
+                default -> {
+                }
             }
         }
     }
@@ -97,23 +108,22 @@ public class TelegramApiExecutorService {
     public List<ImmutablePair<Long, String>> getChannels(String titleSubstring) {
         var errorMessage = new AtomicReference<String>();
 
-        next = false;
+        next.set(false);
 
         client.send(new TdApi.GetChats(new TdApi.ChatListMain(), Long.MAX_VALUE, 0, Integer.MAX_VALUE), object -> {
             switch (object.getConstructor()) {
-                case TdApi.Error.CONSTRUCTOR -> errorMessage.set("Receive an error for getChannels:" + object);
-                case TdApi.Chats.CONSTRUCTOR -> {
-                }
-                default -> System.err.println("Receive wrong response from TDLib:" + object);
+                case TdApi.Error.CONSTRUCTOR -> errorMessage.set("Receive an error for getChannels: " + object);
+                case TdApi.Chats.CONSTRUCTOR -> logger.info("Received chats: %s".formatted(object));
+                default -> logger.error("Receive wrong response from TDLib: %s".formatted(object));
             }
-            next = true;
+            next.set(true);
         });
 
-        while (!next)
+        while (!next.get())
             Thread.onSpinWait();
 
         if (errorMessage.get() != null)
-            throw new Exception(errorMessage.get());
+            throw new IllegalStateException(errorMessage.get());
 
         return chats.values()
                 .stream()
@@ -121,7 +131,7 @@ public class TelegramApiExecutorService {
                 .filter(c -> c.title.toLowerCase().contains(titleSubstring.toLowerCase()))
                 .sorted(Comparator.comparing(c -> c.title))
                 .map(c -> new ImmutablePair<>(c.id, c.title))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -131,7 +141,7 @@ public class TelegramApiExecutorService {
      *
      * @return Joined events
      */
-    @SuppressWarnings({"LoopConditionNotUpdatedInsideLoop", "OptionalGetWithoutIsPresent"})
+    @SuppressWarnings({"LoopConditionNotUpdatedInsideLoop"})
     public List<TdApi.ChatEvent> getJoinedLogUsers(Long channelId, List<TdApi.ChatEvent> allChatEvents, long fromEventId) {
         var filter = new TdApi.ChatEventLogFilters();
         filter.memberJoins = true;
@@ -143,25 +153,27 @@ public class TelegramApiExecutorService {
         while (!chats.containsKey(channelId))
             Thread.onSpinWait();
 
-        next = false;
-        List<TdApi.ChatEvent> currentStepEvents = new ArrayList<>();
+        next.set(false);
+        var currentStepEvents = new ArrayList<TdApi.ChatEvent>();
         client.send(new TdApi.GetChatEventLog(channelId, null, fromEventId, 100, filter, new int[]{}), object -> {
             if (object.getConstructor() == TdApi.ChatEvents.CONSTRUCTOR)
                 currentStepEvents.addAll(Arrays.asList(((TdApi.ChatEvents) object).events));
-            next = true;
+            next.set(true);
         });
 
-        while (!next)
+        while (!next.get())
             Thread.onSpinWait();
 
-        if (currentStepEvents.size() != 0) {
+        if (!currentStepEvents.isEmpty()) {
             allChatEvents.addAll(currentStepEvents);
-            var minEventId = currentStepEvents.stream()
+            var minEventIdOpt = currentStepEvents.stream()
                     .map(e -> e.id)
-                    .min(Long::compareTo)
-                    .get();
+                    .min(Long::compareTo);
 
-            getJoinedLogUsers(channelId, allChatEvents, minEventId);
+            if (minEventIdOpt.isEmpty())
+                throw new IllegalStateException("The chat event log empty!");
+
+            getJoinedLogUsers(channelId, allChatEvents, minEventIdOpt.get());
         }
 
         return allChatEvents;
@@ -188,7 +200,7 @@ public class TelegramApiExecutorService {
                         var user = new User(tgUser.username, tgUser.firstName, tgUser.id);
                         var eventDate = new Date(e.date * 1000L);
 
-                        var domainEvent = new ChatEvent(user, eventDate);
+                        var domainEvent = new ChatEvent(user, eventDate, e.action);
 
                         domainEvents.put(eventDate, domainEvent);
                     }
@@ -215,11 +227,11 @@ public class TelegramApiExecutorService {
     public String authorize(String param) {
         queryParam = param;
 
-        next = false;
+        next.set(false);
         if (authorizationState != null)
             onAuthorizationStateUpdated(authorizationState);
 
-        while (!next)
+        while (!next.get())
             Thread.onSpinWait();
 
         queryParam = null;
@@ -258,14 +270,14 @@ public class TelegramApiExecutorService {
             }
             case TdApi.AuthorizationStateWaitPhoneNumber.CONSTRUCTOR -> {
                 if (queryParam == null) {
-                    setAuthResultAndGoNext(AuthMessage.Enter_phone_number);
+                    setAuthResultAndGoNext(ENTER_PHONE_NUMBER);
                     break;
                 }
                 client.send(new TdApi.SetAuthenticationPhoneNumber(queryParam, null), new TelegramApiExecutorService.AuthorizationRequestHandler());
             }
             case TdApi.AuthorizationStateWaitCode.CONSTRUCTOR -> {
                 if (queryParam == null) {
-                    setAuthResultAndGoNext(AuthMessage.Enter_authentication_code);
+                    setAuthResultAndGoNext(ENTER_AUTHENTICATION_CODE);
                     break;
                 }
                 client.send(new TdApi.CheckAuthenticationCode(queryParam), new AuthorizationRequestHandler());
@@ -273,17 +285,14 @@ public class TelegramApiExecutorService {
 
             case TdApi.AuthorizationStateWaitPassword.CONSTRUCTOR -> {
                 if (queryParam == null) {
-                    setAuthResultAndGoNext(AuthMessage.Enter_password);
+                    setAuthResultAndGoNext(ENTER_PASSWORD);
                     break;
                 }
                 client.send(new TdApi.CheckAuthenticationPassword(queryParam), new TelegramApiExecutorService.AuthorizationRequestHandler());
             }
-            case TdApi.AuthorizationStateReady.CONSTRUCTOR -> setAuthResultAndGoNext(AuthMessage.You_are_authorized);
-            case TdApi.AuthorizationStateClosed.CONSTRUCTOR -> setAuthResultAndGoNext(AuthMessage.Enter_phone_number);
-            default -> {
-                result = "Unsupported authorization state:" + authorizationState;
-                next = true;
-            }
+            case TdApi.AuthorizationStateReady.CONSTRUCTOR -> setAuthResultAndGoNext(YOU_ARE_AUTHORIZED);
+            case TdApi.AuthorizationStateClosed.CONSTRUCTOR -> setAuthResultAndGoNext(ENTER_PHONE_NUMBER);
+            default -> setAuthResultAndGoNext(UNSUPPORTED_STATE);
         }
 
         queryParam = null;
@@ -294,31 +303,31 @@ public class TelegramApiExecutorService {
      *
      * @param message Auth result message
      */
-    private void setAuthResultAndGoNext(AuthMessage message) {
+    private static void setAuthResultAndGoNext(AuthMessage message) {
         result = message.toString();
-        next = true;
+        next.set(true);
     }
 
-    private enum AuthMessage {
-        Enter_phone_number,
-        Enter_authentication_code,
-        Enter_password,
-        You_are_authorized
+    enum AuthMessage {
+        ENTER_PHONE_NUMBER,
+        ENTER_AUTHENTICATION_CODE,
+        ENTER_PASSWORD,
+        YOU_ARE_AUTHORIZED,
+        UNSUPPORTED_STATE
     }
 
     private class AuthorizationRequestHandler implements ResultHandler {
         @Override
         public void onResult(TdApi.Object object) {
             switch (object.getConstructor()) {
-                case TdApi.Error.CONSTRUCTOR:
-                    System.err.println("Receive an error:" + object);
+                case TdApi.Error.CONSTRUCTOR -> {
+                    logger.error("Receive an error: %s".formatted(object));
                     onAuthorizationStateUpdated(null); // repeat last action
-                    break;
-                case TdApi.Ok.CONSTRUCTOR:
-                    // result is already received through UpdateAuthorizationState, nothing to do
-                    break;
-                default:
-                    System.err.println("Receive wrong response from TDLib:" + object);
+                }
+                case TdApi.Ok.CONSTRUCTOR -> {
+                    // result already received through UpdateAuthorizationState, nothing to do
+                }
+                default -> logger.error("Receive wrong response from TDLib: %s".formatted(object));
             }
         }
     }

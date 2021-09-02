@@ -35,8 +35,10 @@ public class CrossPromotionController {
      * @return Created cross promotion
      */
     @PostMapping("/start")
-    public CrossPromotion start(@RequestParam Long administratingChannelId, @RequestParam(required = false) String newChannelName) {
-        return crossPromotionService.start(administratingChannelId, newChannelName);
+    public CrossPromotion start(@RequestParam Long administratingChannelId,
+                                @RequestParam(required = false) String inviteLink,
+                                @RequestParam(required = false) String newChannelName) {
+        return crossPromotionService.start(administratingChannelId, inviteLink, newChannelName);
     }
 
     /**

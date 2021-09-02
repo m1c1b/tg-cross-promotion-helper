@@ -8,10 +8,12 @@ import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.ChatEvent;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.channels.AdministratingChannel;
 import ru.viaznin.tgcrosspromotionhelper.repositories.AdministratingChannelsRepository;
 import ru.viaznin.tgcrosspromotionhelper.repositories.CrossPromotionRepository;
+import ru.viaznin.tgcrosspromotionhelper.validators.CrossPromotionValidator;
 
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static ru.viaznin.tgcrosspromotionhelper.domain.filters.UserFilters.*;
 
 /**
  * Service for cross promotion actions
@@ -19,7 +21,7 @@ import java.util.stream.Collectors;
  * @author Ilya Viaznin
  */
 @Service
-public class CrossPromotionService {
+public class CrossPromotionService implements ValidationService {
     private final CrossPromotionRepository crossPromotionRepository;
 
     private final AdministratingChannelsRepository administratingChannelsRepository;
@@ -35,17 +37,20 @@ public class CrossPromotionService {
      *
      * @param administratingChannelId Channel id
      * @param newChannelName          Channel name if it doesn't exists
+     * @param inviteLink              Link the user joined
      *
      * @return Created cross promotion
      */
-    public CrossPromotion start(Long administratingChannelId, String newChannelName) {
+    public CrossPromotion start(Long administratingChannelId, String inviteLink, String newChannelName) {
         var administratingChannel = administratingChannelsRepository
                 .findFirstByTelegramId(administratingChannelId);
 
         if (administratingChannel == null)
             administratingChannel = new AdministratingChannel(administratingChannelId, newChannelName);
 
-        var newCrossPromo = new CrossPromotion(new Date(), administratingChannel);
+        var newCrossPromo = new CrossPromotion(new Date(), administratingChannel, inviteLink);
+
+        validateAndThrowIfInvalid(new CrossPromotionValidator(), newCrossPromo);
 
         crossPromotionRepository.save(newCrossPromo);
 
@@ -86,11 +91,13 @@ public class CrossPromotionService {
 
         var crossPromotionStartDate = crossPromotion.getStartDate();
 
+        var filterType = getFilterType(crossPromotion);
         var joinedAfterStart = allJoinedUsers
                 .stream()
                 .filter(ce -> crossPromotionStartDate.before(ce.getDate()))
+                .filter(ce -> userFilters.get(filterType).apply(crossPromotion, ce))
                 .map(ChatEvent::getUser)
-                .collect(Collectors.toList());
+                .toList();
 
         joinedAfterStart.forEach(u -> u.setCrossPromotion(crossPromotion));
 

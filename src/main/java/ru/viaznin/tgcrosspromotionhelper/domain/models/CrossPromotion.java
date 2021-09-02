@@ -34,23 +34,30 @@ public class CrossPromotion {
      * End date
      */
     @Column(name = "end_date")
-    public Date endDate;
+    private Date endDate;
+
+    /**
+     * Link the user joined
+     */
+    @Column(name = "invite_link")
+    private String inviteLink;
 
     /**
      * Joined users
      */
     @OneToMany(cascade = CascadeType.ALL)
-    public List<User> joinedUsers;
+    private List<User> joinedUsers;
 
     /**
      * Administrating channel
      */
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "administrating_channel_id")
-    public AdministratingChannel administratingChannel;
+    private AdministratingChannel administratingChannel;
 
-    public CrossPromotion(Date startDate, AdministratingChannel administratingChannel) {
+    public CrossPromotion(Date startDate, AdministratingChannel administratingChannel, String inviteLink) {
         this.startDate = startDate;
         this.administratingChannel = administratingChannel;
+        this.inviteLink = inviteLink;
     }
 }
