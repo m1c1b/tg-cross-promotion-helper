@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService.AuthMessage.*;
 
@@ -132,7 +131,7 @@ public class TelegramApiExecutorService {
                 .filter(c -> c.title.toLowerCase().contains(titleSubstring.toLowerCase()))
                 .sorted(Comparator.comparing(c -> c.title))
                 .map(c -> new ImmutablePair<>(c.id, c.title))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -201,7 +200,7 @@ public class TelegramApiExecutorService {
                         var user = new User(tgUser.username, tgUser.firstName, tgUser.id);
                         var eventDate = new Date(e.date * 1000L);
 
-                        var domainEvent = new ChatEvent(user, eventDate);
+                        var domainEvent = new ChatEvent(user, eventDate, e.action);
 
                         domainEvents.put(eventDate, domainEvent);
                     }

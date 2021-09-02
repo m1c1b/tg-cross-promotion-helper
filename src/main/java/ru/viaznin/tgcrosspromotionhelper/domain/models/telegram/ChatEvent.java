@@ -1,6 +1,9 @@
 package ru.viaznin.tgcrosspromotionhelper.domain.models.telegram;
 
+import it.tdlight.jni.TdApi.ChatEventAction;
+import it.tdlight.jni.TdApi.ChatEventMemberJoinedByInviteLink;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Date;
 
@@ -10,6 +13,7 @@ import java.util.Date;
  * @author Ilya Viaznin
  */
 @Getter
+@RequiredArgsConstructor
 public class ChatEvent {
     /**
      * User of event
@@ -21,8 +25,17 @@ public class ChatEvent {
      */
     private final Date date;
 
-    public ChatEvent(User user, Date date) {
+    /**
+     * Link the user joined
+     */
+    private final String inviteLink;
+
+    public ChatEvent(User user, Date date, ChatEventAction action) {
         this.user = user;
         this.date = date;
+
+        inviteLink = action instanceof ChatEventMemberJoinedByInviteLink joinedByInviteLink
+                ? joinedByInviteLink.inviteLink.inviteLink
+                : "";
     }
 }
