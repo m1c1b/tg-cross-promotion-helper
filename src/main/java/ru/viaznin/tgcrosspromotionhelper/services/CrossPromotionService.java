@@ -11,7 +11,8 @@ import ru.viaznin.tgcrosspromotionhelper.repositories.CrossPromotionRepository;
 
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static ru.viaznin.tgcrosspromotionhelper.domain.filters.UserFilters.*;
 
 /**
  * Service for cross promotion actions
@@ -87,11 +88,13 @@ public class CrossPromotionService {
 
         var crossPromotionStartDate = crossPromotion.getStartDate();
 
+        var filterType = getFilterType(crossPromotion);
         var joinedAfterStart = allJoinedUsers
                 .stream()
                 .filter(ce -> crossPromotionStartDate.before(ce.getDate()))
+                .filter(ce -> userFilters.get(filterType).apply(crossPromotion, ce))
                 .map(ChatEvent::getUser)
-                .collect(Collectors.toList());
+                .toList();
 
         joinedAfterStart.forEach(u -> u.setCrossPromotion(crossPromotion));
 
