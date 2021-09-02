@@ -12,6 +12,7 @@ import ru.viaznin.tgcrosspromotionhelper.validators.CrossPromotionValidator;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static ru.viaznin.tgcrosspromotionhelper.domain.filters.UserFilters.*;
 
@@ -97,7 +98,7 @@ public class CrossPromotionService implements ValidationService {
                 .filter(ce -> crossPromotionStartDate.before(ce.getDate()))
                 .filter(ce -> userFilters.get(filterType).apply(crossPromotion, ce))
                 .map(ChatEvent::getUser)
-                .toList();
+                .collect(Collectors.toList());
 
         joinedAfterStart.forEach(u -> u.setCrossPromotion(crossPromotion));
 
