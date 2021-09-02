@@ -35,17 +35,18 @@ public class CrossPromotionService {
      *
      * @param administratingChannelId Channel id
      * @param newChannelName          Channel name if it doesn't exists
+     * @param inviteLink              Link the user joined
      *
      * @return Created cross promotion
      */
-    public CrossPromotion start(Long administratingChannelId, String newChannelName) {
+    public CrossPromotion start(Long administratingChannelId, String inviteLink, String newChannelName) {
         var administratingChannel = administratingChannelsRepository
                 .findFirstByTelegramId(administratingChannelId);
 
         if (administratingChannel == null)
             administratingChannel = new AdministratingChannel(administratingChannelId, newChannelName);
 
-        var newCrossPromo = new CrossPromotion(new Date(), administratingChannel);
+        var newCrossPromo = new CrossPromotion(new Date(), administratingChannel, inviteLink);
 
         crossPromotionRepository.save(newCrossPromo);
 
