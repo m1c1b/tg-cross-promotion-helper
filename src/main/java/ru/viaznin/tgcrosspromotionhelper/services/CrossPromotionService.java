@@ -8,6 +8,7 @@ import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.ChatEvent;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.channels.AdministratingChannel;
 import ru.viaznin.tgcrosspromotionhelper.repositories.AdministratingChannelsRepository;
 import ru.viaznin.tgcrosspromotionhelper.repositories.CrossPromotionRepository;
+import ru.viaznin.tgcrosspromotionhelper.validators.CrossPromotionValidator;
 
 import java.util.Date;
 import java.util.List;
@@ -20,7 +21,7 @@ import static ru.viaznin.tgcrosspromotionhelper.domain.filters.UserFilters.*;
  * @author Ilya Viaznin
  */
 @Service
-public class CrossPromotionService {
+public class CrossPromotionService implements ValidationService {
     private final CrossPromotionRepository crossPromotionRepository;
 
     private final AdministratingChannelsRepository administratingChannelsRepository;
@@ -48,6 +49,8 @@ public class CrossPromotionService {
             administratingChannel = new AdministratingChannel(administratingChannelId, newChannelName);
 
         var newCrossPromo = new CrossPromotion(new Date(), administratingChannel, inviteLink);
+
+        validateAndThrowIfInvalid(new CrossPromotionValidator(), newCrossPromo);
 
         crossPromotionRepository.save(newCrossPromo);
 
