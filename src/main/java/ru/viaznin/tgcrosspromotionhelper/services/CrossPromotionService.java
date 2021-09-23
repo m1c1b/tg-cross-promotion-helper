@@ -1,13 +1,15 @@
 package ru.viaznin.tgcrosspromotionhelper.services;
 
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.CrossPromotion;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.ChatEvent;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.channels.AdministratingChannel;
+import ru.viaznin.tgcrosspromotionhelper.dto.CrossPromotionDto;
 import ru.viaznin.tgcrosspromotionhelper.repositories.AdministratingChannelsRepository;
 import ru.viaznin.tgcrosspromotionhelper.repositories.CrossPromotionRepository;
+import ru.viaznin.tgcrosspromotionhelper.transformers.CrossPromotionTransformer;
 import ru.viaznin.tgcrosspromotionhelper.validators.CrossPromotionValidator;
 
 import java.util.Date;
@@ -22,16 +24,13 @@ import static ru.viaznin.tgcrosspromotionhelper.domain.filters.UserFilters.*;
  * @author Ilya Viaznin
  */
 @Service
+@RequiredArgsConstructor
 public class CrossPromotionService implements ValidationService {
     private final CrossPromotionRepository crossPromotionRepository;
 
     private final AdministratingChannelsRepository administratingChannelsRepository;
 
-    @Autowired
-    public CrossPromotionService(CrossPromotionRepository crossPromotionRepository, AdministratingChannelsRepository administratingChannelsRepository) {
-        this.crossPromotionRepository = crossPromotionRepository;
-        this.administratingChannelsRepository = administratingChannelsRepository;
-    }
+    private final CrossPromotionTransformer transformer;
 
     /**
      * Start cross promotion
@@ -108,6 +107,21 @@ public class CrossPromotionService implements ValidationService {
         crossPromotionRepository.save(crossPromotion);
 
         return crossPromotion.getId();
+    }
+
+    /**
+     * Update cross promotion model
+     *
+     * @param crossPromotionDto Model from request
+     *
+     * @return Updated model
+     */
+    public CrossPromotionDto update(CrossPromotionDto crossPromotionDto) {
+        var mappedDto = transformer.dtoToEntity(crossPromotionDto);
+
+        var updatedEntity = crossPromotionRepository.save(mappedDto);
+
+        return transformer.entityToDto(updatedEntity);
     }
 
     /**

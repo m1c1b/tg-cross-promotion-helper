@@ -1,8 +1,8 @@
 package ru.viaznin.tgcrosspromotionhelper.controllers;
 
 import it.tdlight.jni.TdApi;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService;
 
@@ -16,13 +16,9 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/telegram")
+@RequiredArgsConstructor
 public class TelegramController {
     private final TelegramApiExecutorService telegramApiExecutor;
-
-    @Autowired
-    public TelegramController(TelegramApiExecutorService telegramApiExecutor) {
-        this.telegramApiExecutor = telegramApiExecutor;
-    }
 
     @GetMapping("/login")
     public String login(@RequestParam(required = false) String query) {
