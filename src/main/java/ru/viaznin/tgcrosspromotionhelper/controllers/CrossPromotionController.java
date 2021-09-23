@@ -58,6 +58,18 @@ public class CrossPromotionController {
     }
 
     /**
+     * Update cross promotion model
+     *
+     * @param crossPromotionDto Model from request
+     *
+     * @return Updated model
+     */
+    @PatchMapping("/update")
+    public CrossPromotionDto update(@RequestBody CrossPromotionDto crossPromotionDto) {
+        return crossPromotionService.update(crossPromotionDto);
+    }
+
+    /**
      * Get cross promotion report
      *
      * @param crossPromotionId Cross promotion id
