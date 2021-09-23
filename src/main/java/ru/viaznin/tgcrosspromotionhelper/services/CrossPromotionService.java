@@ -1,13 +1,15 @@
 package ru.viaznin.tgcrosspromotionhelper.services;
 
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.CrossPromotion;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.ChatEvent;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.channels.AdministratingChannel;
+import ru.viaznin.tgcrosspromotionhelper.dto.CrossPromotionDto;
 import ru.viaznin.tgcrosspromotionhelper.repositories.AdministratingChannelsRepository;
 import ru.viaznin.tgcrosspromotionhelper.repositories.CrossPromotionRepository;
+import ru.viaznin.tgcrosspromotionhelper.transformers.CrossPromotionTransformer;
 import ru.viaznin.tgcrosspromotionhelper.validators.CrossPromotionValidator;
 
 import java.util.Date;

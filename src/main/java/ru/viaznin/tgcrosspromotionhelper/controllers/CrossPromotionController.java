@@ -1,8 +1,9 @@
 package ru.viaznin.tgcrosspromotionhelper.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.CrossPromotion;
+import ru.viaznin.tgcrosspromotionhelper.dto.CrossPromotionDto;
 import ru.viaznin.tgcrosspromotionhelper.services.CrossPromotionService;
 import ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService;
 
@@ -15,16 +16,11 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/crossPromotion")
+@RequiredArgsConstructor
 public class CrossPromotionController {
     private final CrossPromotionService crossPromotionService;
 
     private final TelegramApiExecutorService telegramApiExecutorService;
-
-    @Autowired
-    public CrossPromotionController(CrossPromotionService crossPromotionService, TelegramApiExecutorService telegramApiExecutorService) {
-        this.crossPromotionService = crossPromotionService;
-        this.telegramApiExecutorService = telegramApiExecutorService;
-    }
 
     /**
      * Start cross promotion
