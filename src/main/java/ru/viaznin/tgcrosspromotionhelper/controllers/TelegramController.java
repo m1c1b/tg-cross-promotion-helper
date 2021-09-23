@@ -3,10 +3,7 @@ package ru.viaznin.tgcrosspromotionhelper.controllers;
 import it.tdlight.jni.TdApi;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService;
 
 import java.util.ArrayList;
@@ -31,6 +28,12 @@ public class TelegramController {
     public String login(@RequestParam(required = false) String query) {
 
         return telegramApiExecutor.authorize(query);
+    }
+
+    @DeleteMapping("/logout")
+    public String logout() {
+
+        return telegramApiExecutor.logout();
     }
 
     /**
