@@ -4,17 +4,18 @@ package ru.viaznin.tgcrosspromotionhelper.services;
 import it.tdlight.common.ResultHandler;
 import it.tdlight.common.TelegramClient;
 import it.tdlight.jni.TdApi;
+import it.tdlight.tdlight.ClientManager;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import ru.viaznin.tgcrosspromotionhelper.configuration.TelegramProperties;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.ChatEvent;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.telegram.User;
 
+import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,6 +31,8 @@ import static ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorServ
  */
 @Service
 @Scope("singleton")
+@Slf4j
+@RequiredArgsConstructor
 public class TelegramApiExecutorService {
     /**
      * Fetched chats
@@ -54,7 +57,7 @@ public class TelegramApiExecutorService {
     /**
      * Client
      */
-    private final TelegramClient client;
+    private TelegramClient client;
 
     /**
      * Auth query string
@@ -66,13 +69,9 @@ public class TelegramApiExecutorService {
      */
     private TdApi.AuthorizationState authorizationState;
 
-    private final Logger logger;
-
-    @Autowired
-    public TelegramApiExecutorService(TelegramProperties telegramProperties, TelegramClient client) {
-        logger = LogManager.getLogger();
-        this.telegramProperties = telegramProperties;
-        this.client = client;
+    @PostConstruct
+    private synchronized void createClient() {
+        client = ClientManager.create();
         client.initialize(new UpdateHandler(), null, null);
         client.execute(new TdApi.SetLogVerbosityLevel(0));
     }
@@ -113,8 +112,8 @@ public class TelegramApiExecutorService {
         client.send(new TdApi.GetChats(new TdApi.ChatListMain(), Long.MAX_VALUE, 0, Integer.MAX_VALUE), object -> {
             switch (object.getConstructor()) {
                 case TdApi.Error.CONSTRUCTOR -> errorMessage.set("Receive an error for getChannels: " + object);
-                case TdApi.Chats.CONSTRUCTOR -> logger.info("Received chats: %s".formatted(object));
-                default -> logger.error("Receive wrong response from TDLib: %s".formatted(object));
+                case TdApi.Chats.CONSTRUCTOR -> log.info("Received chats: %s".formatted(object));
+                default -> log.error("Receive wrong response from TDLib: %s".formatted(object));
             }
             next.set(true);
         });
@@ -239,6 +238,21 @@ public class TelegramApiExecutorService {
         return result;
     }
 
+    /*
+     * Logout
+     */
+    @SneakyThrows
+    public String logout() {
+        next.set(false);
+
+        client.send(new TdApi.LogOut(), new AuthorizationRequestHandler());
+
+        while (!next.get())
+            Thread.onSpinWait();
+
+        return result;
+    }
+
     /**
      * Authorization steps actions
      *
@@ -291,7 +305,12 @@ public class TelegramApiExecutorService {
                 client.send(new TdApi.CheckAuthenticationPassword(queryParam), new TelegramApiExecutorService.AuthorizationRequestHandler());
             }
             case TdApi.AuthorizationStateReady.CONSTRUCTOR -> setAuthResultAndGoNext(YOU_ARE_AUTHORIZED);
-            case TdApi.AuthorizationStateClosed.CONSTRUCTOR -> setAuthResultAndGoNext(ENTER_PHONE_NUMBER);
+            case TdApi.AuthorizationStateLoggingOut.CONSTRUCTOR -> setAuthResultAndGoNext(YOU_ARE_LOGGED_OUT);
+            case TdApi.AuthorizationStateClosed.CONSTRUCTOR -> {
+                createClient();
+                setAuthResultAndGoNext(YOU_ARE_LOGGED_OUT);
+            }
+
             default -> setAuthResultAndGoNext(UNSUPPORTED_STATE);
         }
 
@@ -313,6 +332,7 @@ public class TelegramApiExecutorService {
         ENTER_AUTHENTICATION_CODE,
         ENTER_PASSWORD,
         YOU_ARE_AUTHORIZED,
+        YOU_ARE_LOGGED_OUT,
         UNSUPPORTED_STATE
     }
 
@@ -321,13 +341,13 @@ public class TelegramApiExecutorService {
         public void onResult(TdApi.Object object) {
             switch (object.getConstructor()) {
                 case TdApi.Error.CONSTRUCTOR -> {
-                    logger.error("Receive an error: %s".formatted(object));
+                    log.error("Receive an error: %s".formatted(object));
                     onAuthorizationStateUpdated(null); // repeat last action
                 }
                 case TdApi.Ok.CONSTRUCTOR -> {
                     // result already received through UpdateAuthorizationState, nothing to do
                 }
-                default -> logger.error("Receive wrong response from TDLib: %s".formatted(object));
+                default -> log.error("Receive wrong response from TDLib: %s".formatted(object));
             }
         }
     }
