@@ -63,7 +63,6 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <scope>compile</scope>
             <version>1.18.20</version>
             <optional>true</optional>
         </dependency>
@@ -138,6 +137,14 @@
                             <version>${org.mapstruct.version}</version>
                         </path>
                     </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.heroku.sdk</groupId>
+                <artifactId>heroku-maven-plugin</artifactId>
+                <version>3.0.3</version>
+                <configuration>
+                    <appName>cross-promotion-helper</appName>
                 </configuration>
             </plugin>
         </plugins>
