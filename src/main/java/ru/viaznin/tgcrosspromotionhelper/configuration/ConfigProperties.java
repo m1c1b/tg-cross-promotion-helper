@@ -20,7 +20,13 @@ public class ConfigProperties {
     }
 
     @Bean
-    public TelegramClient telegramClient(){
+    @ConfigurationProperties(prefix = "heroku")
+    public HerokuProperties herokuProperties() {
+        return new HerokuProperties();
+    }
+
+    @Bean
+    public TelegramClient telegramClient() {
         return ClientManager.create();
     }
 }
