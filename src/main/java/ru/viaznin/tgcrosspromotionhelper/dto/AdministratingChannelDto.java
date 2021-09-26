@@ -1,13 +1,15 @@
 package ru.viaznin.tgcrosspromotionhelper.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Ilya Viaznin
  */
 @Data
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class AdministratingChannelDto {
 
     private Long id;
