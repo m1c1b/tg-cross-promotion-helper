@@ -1,5 +1,10 @@
 package ru.viaznin.tgcrosspromotionhelper.controllers;
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.viaznin.tgcrosspromotionhelper.domain.models.CrossPromotion;
@@ -9,11 +14,7 @@ import ru.viaznin.tgcrosspromotionhelper.services.TelegramApiExecutorService;
 
 import java.util.List;
 
-/**
- * Controller for cross promotion actions
- *
- * @author Ilya Viaznin
- */
+@Tag(name = "cross-promotion-controller", description = "API for cross promotion actions")
 @RestController
 @RequestMapping("/crossPromotion")
 @RequiredArgsConstructor
@@ -22,14 +23,12 @@ public class CrossPromotionController {
 
     private final TelegramApiExecutorService telegramApiExecutorService;
 
-    /**
-     * Start cross promotion
-     *
-     * @param administratingChannelId Channel id
-     * @param newChannelName          Channel name if it doesn't exists
-     *
-     * @return Created cross promotion
-     */
+    @Operation(summary = "Start cross promotion", description = "Starts cross promotion and returns it dto")
+    @Parameters(value = {
+            @Parameter(name = "administratingChannelId", description = "Channel id"),
+            @Parameter(name = "inviteLink", description = "Cross promotion invite link"),
+            @Parameter(name = "newChannelName", description = "Channel name for db record"),
+    })
     @PostMapping("/start")
     public CrossPromotion start(@RequestParam Long administratingChannelId,
                                 @RequestParam(required = false) String inviteLink,
@@ -37,13 +36,10 @@ public class CrossPromotionController {
         return crossPromotionService.start(administratingChannelId, inviteLink, newChannelName);
     }
 
-    /**
-     * End cross promotion
-     *
-     * @param crossPromotionId Cross promotion id
-     *
-     * @return Current cross promotion id
-     */
+    @Operation(summary = "End cross promotion", description = "Ends cross promotion and returns it id")
+    @Parameters(value = {
+            @Parameter(name = "crossPromotionId", description = "Channel id"),
+    })
     @PatchMapping("/end")
     public Long end(@RequestParam Long crossPromotionId) {
         var tgId = crossPromotionService.getAdministratingChannelTelegramId(crossPromotionId);
@@ -53,35 +49,25 @@ public class CrossPromotionController {
         return crossPromotionService.end(crossPromotionId, allJoinedUsers);
     }
 
-    /**
-     * Update cross promotion model
-     *
-     * @param crossPromotionDto Model from request
-     *
-     * @return Updated model
-     */
+    @Operation(summary = "Update cross promotion model", description = "Updates cross promotion model and returns it updated model")
+    @Parameters(value = {
+            @Parameter(name = "crossPromotionDto", description = "Updated cross promotion model"),
+    })
     @PatchMapping("/update")
     public CrossPromotionDto update(@RequestBody CrossPromotionDto crossPromotionDto) {
         return crossPromotionService.update(crossPromotionDto);
     }
 
-    /**
-     * Get cross promotion report
-     *
-     * @param crossPromotionId Cross promotion id
-     *
-     * @return Cross promotion report
-     */
+    @Operation(summary = "Get cross promotion report", description = "Returns cross promotion report with usernames and tg ids")
+    @Parameters(value = {
+            @Parameter(name = "crossPromotionId", description = "Cross promotion id"),
+    })
     @GetMapping("/getReport")
     public String getReport(@RequestParam Long crossPromotionId) {
         return crossPromotionService.getReport(crossPromotionId);
     }
 
-    /**
-     * Get ongoing cross promotions
-     *
-     * @return Ongoing cross promotions
-     */
+    @Operation(summary = "Get ongoing cross promotions", description = "Returns ongoing cross promotions")
     @GetMapping("/getOngoing")
     public List<CrossPromotion> getOngoing() {
         return crossPromotionService.getOngoing();
