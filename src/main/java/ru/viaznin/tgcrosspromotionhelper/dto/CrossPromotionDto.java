@@ -1,6 +1,8 @@
 package ru.viaznin.tgcrosspromotionhelper.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Date;
@@ -10,7 +12,8 @@ import java.util.List;
  * @author Ilya Viaznin
  */
 @Data
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public final class CrossPromotionDto {
     private Long id;
 

@@ -2,12 +2,14 @@ package ru.viaznin.tgcrosspromotionhelper.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Ilya Viaznin
  */
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class UserDto {
 
     private Long id;
